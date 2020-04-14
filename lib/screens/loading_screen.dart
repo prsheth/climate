@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:climate/services/location.dart';
-import 'package:http/http.dart';
+import 'package:climate/services/networking.dart';
+import 'location_screen.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+
+const API_KEY = '5b7720d550daa32502208d0163813ee2';
 
 class LoadingScreen extends StatefulWidget {
   @override
@@ -8,6 +12,8 @@ class LoadingScreen extends StatefulWidget {
 }
 
 class _LoadingScreenState extends State<LoadingScreen> {
+  double latitude;
+  double longitude;
   /*
     Lifecycle methods for stateful widget
       initState()-> initial state, called only once, when state is initialized
@@ -17,27 +23,35 @@ class _LoadingScreenState extends State<LoadingScreen> {
   @override
   void initState() {
     super.initState();
-    getLocation();
+    getLocationData();
   }
 
-  void getLocation() async {
+  void getLocationData() async {
     Location location = Location();
     await location.getCurrentLocation();
-    print(location.latitude);
-    print(location.longitude);
-  }
+    latitude = location.latitude;
+    longitude = location.longitude;
+    NetworkHelper networkHelper = NetworkHelper(
+        'https://api.openweathermap.org/data/2.5/weather?lat=$latitude&lon=$longitude&appid=$API_KEY&units=metric');
+    var weatherData =
+        await networkHelper.getData(); //AWAIT ONLY ON FUTURE METHOD
 
-  void getData() async {
-    Response response = await get(
-        'https://samples.openweathermap.org/data/2.5/weather?lat=35&lon=139&appid=b6907d289e10d714a6e88b30761fae22');
-    print(response.body);
+    Navigator.push(context, MaterialPageRoute(builder: (context) {
+      return LocationScreen(
+        locationWeather: weatherData,
+      );
+    }));
   }
 
   @override
   Widget build(BuildContext context) {
-    getData();
     return Scaffold(
-      body: Container(margin: EdgeInsets.all(30.0), color: Colors.indigo),
+      body: Center(
+        child: SpinKitDoubleBounce(
+          color: Colors.white,
+          size: 100.0,
+        ),
+      ),
     );
   }
 }
